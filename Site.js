@@ -1,4 +1,4 @@
-const cart = {};
+let cart = [];
 
 function addToCart(productName, price) {
     if (cart[productName]) {
@@ -30,43 +30,80 @@ function changeQuantity(productName, delta) {
 }
 
 function renderCart() {
-    const cartContainer = document.getElementById('cart-items');
-    const emptyMessage = document.getElementById('empty-cart-message');
-    const cartTotal = document.getElementById('cart-total');
-    const checkoutButton = document.getElementById('checkout-button');
+    const cartContainer = document.createElement('div');
+    const cartWrapper = document.getElementById('cart-wrapper');
+    cartWrapper.innerHTML = '';
 
-    cartContainer.innerHTML = '';
+    if (Object.keys(cart).length === 0) {
+        cartWrapper.innerHTML = "<p>Your cart is empty!</p>";
+        return;
+    }
+
+    const cartList = document.createElement('ul');
+    cartList.style.listStyle = 'none';
+    cartList.style.padding = '0';
 
     Object.entries(cart).forEach(([productName, { price, quantity }]) => {
-        cartContainer.innerHTML += `
-            <li>
-                <div>${escapeHtml(productName)} - ${(price * quantity).toFixed(2)}</div>
-                <div>
-                    <button onclick="changeQuantity('${escapeHtml(productName)}', -1)">-</button>
-                    ${quantity}
-                    <button onclick="changeQuantity('${escapeHtml(productName)}', 1)">+</button>
-                    <button class="btn btn-danger" onclick="removeFromCart('${escapeHtml(productName)}')">Remove</button>
-                </div>
-            </li>
+        const listItem = document.createElement('li');
+        listItem.style.marginBottom = '10px';
+
+        listItem.innerHTML = `
+            <div>${escapeHtml(productName)} - $${(price * quantity).toFixed(2)}</div>
+            <div>
+                <button style="margin: 0 5px; font-size: 24px; cursor: pointer; background: none; border: none;" onclick="changeQuantity('${escapeHtml(productName)}', -1)">-</button>
+                ${quantity}
+                <button style="margin: 0 5px; font-size: 22px; cursor: pointer; background: none; border: none;" onclick="changeQuantity('${escapeHtml(productName)}', 1)">+</button>
+                <button class="btn btn-danger" style="margin-left: 10px; " onclick="removeFromCart('${escapeHtml(productName)}')">Clear</button>
+            </div>
         `;
+
+        cartList.appendChild(listItem);
     });
 
-    if (Object.keys(cart).length > 0) {
-        emptyMessage.style.display = 'none';
-        cartTotal.style.display = 'block';
-        checkoutButton.style.display = 'block';
+    cartContainer.appendChild(cartList);
 
-        checkoutButton.onclick = () => {
-            alert('Checkout is complete!');
-        };
-    } else {
-        emptyMessage.style.display = 'block';
-        cartTotal.style.display = 'none';
-        checkoutButton.style.display = 'none';
+    const totalPrice = Object.values(cart).reduce(
+        (sum, { price, quantity }) => sum + price * quantity,
+        0
+    );
 
-        checkoutButton.onclick = null;
-    }
+    const totalPriceDiv = document.createElement('div');
+    totalPriceDiv.style.marginTop = '20px';
+    totalPriceDiv.style.textAlign = 'center';
+    totalPriceDiv.style.fontWeight = 'bold';
+    totalPriceDiv.innerHTML = `Total: $${totalPrice.toFixed(2)}`;
+
+    const checkoutButton = document.createElement('button');
+    checkoutButton.textContent = 'Checkout';
+    checkoutButton.style.padding = '10px 20px';
+    checkoutButton.style.backgroundColor = '#28a745';
+    checkoutButton.style.color = '#fff';
+    checkoutButton.style.border = 'none';
+    checkoutButton.style.borderRadius = '5px';
+    checkoutButton.style.cursor = 'pointer';
+    checkoutButton.style.marginTop = '20px';
+
+    checkoutButton.onclick = () => {
+        alert('Checkout completed!');
+        cart = {}; 
+        renderCart(); 
+    };
+
+    cartContainer.appendChild(totalPriceDiv);
+    cartContainer.appendChild(checkoutButton);
+
+    cartWrapper.appendChild(cartContainer);
 }
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+
+
+
 
 function updateTotalPrice() {
     const totalPrice = document.getElementById('total-price');
@@ -76,7 +113,7 @@ function updateTotalPrice() {
         total += price * quantity;
     });
 
-    totalPrice.textContent = total.toFixed(2);
+    totalPrice.textContent = total + ':-';
 }
 
 function escapeHtml(str) {
@@ -86,3 +123,5 @@ function escapeHtml(str) {
 }
 
 window.onload = renderCart;
+window.addToCart = addToCart;
+window.removeFromCart = removeFromCart;
